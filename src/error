@@ -1,0 +1,47 @@
+dhcp_routines.c: In function ‘makeup_dhcpmsg_discover’:
+dhcp_routines.c:41:40: error: ‘MAX_SNAME’ undeclared (first use in this function); did you mean ‘MAX_SNAME_LEN’?
+   41 |         memset(msg->sname, (uint8_t)0, MAX_SNAME);
+      |                                        ^~~~~~~~~
+      |                                        MAX_SNAME_LEN
+dhcp_routines.c:41:40: note: each undeclared identifier is reported only once for each function it appears in
+dhcp_routines.c:42:39: error: ‘MAX_FILE’ undeclared (first use in this function); did you mean ‘AF_FILE’?
+   42 |         memset(msg->file, (uint8_t)0, MAX_FILE);
+      |                                       ^~~~~~~~
+      |                                       AF_FILE
+dhcp_routines.c:50:27: error: ‘MAGIC_COOKIE_3’ undeclared (first use in this function); did you mean ‘MACIC_COOKIE_3’?
+   50 |         msg->options[3] = MAGIC_COOKIE_3;
+      |                           ^~~~~~~~~~~~~~
+      |                           MACIC_COOKIE_3
+dhcp_routines.c: In function ‘dhcpd_probe_reporter’:
+dhcp_routines.c:119:38: warning: cast to pointer from integer of different size [-Wint-to-pointer-cast]
+  119 |         const struct in_addr *addr = (struct in_addr *)msg->siaddr;
+      |                                      ^
+dhcp_routines.c:123:17: warning: implicit declaration of function ‘fprintf’ [-Wimplicit-function-declaration]
+  123 |                 fprintf(stdout, "dhcpd: %s\n", ip_address);
+      |                 ^~~~~~~
+dhcp_routines.c:123:17: warning: incompatible implicit declaration of built-in function ‘fprintf’
+dhcp_routines.c:10:1: note: include ‘<stdio.h>’ or provide a declaration of ‘fprintf’
+    9 | #include <unistd.h>
+  +++ |+#include <stdio.h>
+   10 | 
+dhcp_routines.c:123:25: error: ‘stdout’ undeclared (first use in this function)
+  123 |                 fprintf(stdout, "dhcpd: %s\n", ip_address);
+      |                         ^~~~~~
+dhcp_routines.c:123:25: note: ‘stdout’ is defined in header ‘<stdio.h>’; did you forget to ‘#include <stdio.h>’?
+dhcp_routines.c: In function ‘recv_dhcp_reply_on’:
+dhcp_routines.c:193:17: warning: incompatible implicit declaration of built-in function ‘fprintf’
+  193 |                 fprintf(stdout, "Received UDP Datagram from %s\n",
+      |                 ^~~~~~~
+dhcp_routines.c:193:17: note: include ‘<stdio.h>’ or provide a declaration of ‘fprintf’
+dhcp_routines.c:193:25: error: ‘stdout’ undeclared (first use in this function)
+  193 |                 fprintf(stdout, "Received UDP Datagram from %s\n",
+      |                         ^~~~~~
+dhcp_routines.c:193:25: note: ‘stdout’ is defined in header ‘<stdio.h>’; did you forget to ‘#include <stdio.h>’?
+dhcp_routines.c:194:78: warning: dereferencing ‘void *’ pointer
+  194 |                         inet_ntop(AF_INET, (struct sockaddr_in *)hdr.msg_name->sin_addr, ipv4_addr_str, IPv4_STRADDR_LEN));
+      |                                                                              ^~
+dhcp_routines.c:194:78: error: request for member ‘sin_addr’ in something not a structure or union
+dhcp_routines.c: In function ‘send_dhcp_message_on’:
+dhcp_routines.c:215:29: warning: initialization discards ‘const’ qualifier from pointer target type [-Wdiscarded-qualifiers]
+  215 |                 .iov_base = msg,
+      |                             ^~~
