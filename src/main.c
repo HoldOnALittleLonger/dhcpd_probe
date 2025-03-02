@@ -6,7 +6,9 @@
 int main(int argc, char *argv[])
 {
         if (argc < 2) {
-                fprintf(stdout, "Usage : dhcpd_probe <interface>\n");
+                fprintf(stdout,
+                        "Usage : dhcpd_probe <interface>\n"
+                        "# request root to send packet to broadcast address.\n");
                 return 1;
         }
 

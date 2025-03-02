@@ -13,8 +13,8 @@ enum DHCPFUNC_ERROR {
         DHCPFUNC_ESIZE = 5,
         DHCPFUNC_EEPOLL = 6,
         DHCPFUNC_ERECV = 7,
-
-        DHCPFUNC_EINFO = 16
+        DHCPFUNC_EBIND = 8,
+        DHCPFUNC_EBROADCAST = 9
 };
 
 static enum DHCPFUNC_ERROR dhcpfunc_error(int ec)
@@ -64,10 +64,11 @@ int dhcpd_probe_reporter(const struct dhcp_msg *msg, size_t size);
  * @sockfd:             socket
  * @buffer:             where to store message
  * @buffer_len:         how long @buffer is
+ * @mtu:                maximum transport unit
  * return:              DHCPFUNC_EEXPIRED => no more reply is available(it's OK)
  *                      -error code => fault
  */
-int recv_dhcp_reply_on(int sockfd, struct dhcp_msg *buffer, size_t buffer_len);
+int recv_dhcp_reply_on(int sockfd, struct dhcp_msg *buffer, size_t buffer_len, int mtu);
 
 /**
  * send_dhcp_message_on - send dhcp msg on a specified socket
