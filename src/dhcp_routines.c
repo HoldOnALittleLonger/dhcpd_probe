@@ -130,7 +130,9 @@ int dhcpd_probe_reporter(const struct dhcp_msg *msg, size_t size)
         const struct in_addr *addr = (struct in_addr *)&msg->yiaddr;
         char ip_address[IPv4_STRADDR_LEN] = {0};
 
-        if (inet_ntop(AF_INET, addr, ip_address, 16)) {
+        if (msg->op != BOOTREPLY) {
+                fprintf(stdout, "DHCP message is not reply.\n");
+        } else if (inet_ntop(AF_INET, addr, ip_address, 16)) {
                 fprintf(stdout, "Assigned IP address : %s\n", ip_address);
                 putchar('\n');
         }
@@ -212,13 +214,16 @@ int recv_dhcp_reply_on(int sockfd, struct dhcp_msg *buffer, size_t buffer_len, i
 
                 ip_packet *ipacket = inet_packet.msg_iov->iov_base;
 
+                const struct udp_segment *udpseg = ip_payload(ipacket);
+
+                if (ipacket->des == INADDR_BROADCAST ||
+                    ipacket->protocol != UDP_OVER_IP || 
+                    ntohs(udpseg->udphdr.dport) != DHCPC_RECV_PORT)
+                        continue;
+
                 const struct in_addr inaddr = {((struct ip_header *)ipacket)->src};
                 fprintf(stdout, "Received IP Packet from %s\n",
                         inet_ntop(AF_INET, &inaddr, ipv4_addr_str, IPv4_STRADDR_LEN));
-
-                const struct udp_segment *udpseg = ip_payload(ipacket);
-                if (ntohs(udpseg->udphdr.dport) != DHCPC_RECV_PORT)
-                        continue;
 
                 size_t data_size = buffer_len < udp_data_length(udpseg) ?
                         buffer_len : udp_data_length(udpseg);
