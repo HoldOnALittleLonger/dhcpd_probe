@@ -23,10 +23,23 @@ int dhcpd_probe(const char *interface)
         if_hw_addr(mac_address, ETHER_ADDR_LEN);
 
         int ret = 0;
+
+        /* AF_INET UDP for send message */
         int socketfd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
         if (socketfd < 0) {
                 PRINTF_TO_STDERR(dhcpd_probe_error(DHCPFUNC_ESOCKFD));
                 return -1;
+        }
+
+        /**
+         * AF_PACKET with SOCK_DGRAM,IP packets subcommited by link-level removed
+         * ethernet frame header.
+         */
+        int sockllfd = socket(AF_PACKET, SOCK_DGRAM, htons(ETH_P_IP));
+        if (sockllfd < 0) {
+                PRINTF_TO_STDERR(dhcpd_probe_error(DHCPFUNC_ESOCKFD));
+                ret = -1;
+                goto quit_nomalloc;
         }
 
         /* enable broadcast */
@@ -44,6 +57,21 @@ int dhcpd_probe(const char *interface)
                 goto quit_nomalloc;
         }
 
+        /**
+         * link-level socket address used for bind to network card interface.
+         */
+        struct sockaddr_ll ll_addr = {0};
+        ll_addr.sll_family = AF_PACKET;
+        ll_addr.sll_protocol = htons(ETH_P_IP);
+        ll_addr.sll_ifindex = if_idx();
+
+        /* bind to network card for receive IP packet */
+        if (bind(sockllfd, (struct sockaddr *)&ll_addr, sizeof(struct sockaddr_ll)) < 0) {
+                PRINTF_TO_STDERR(dhcpd_probe_error(DHCPFUNC_EBIND));
+                ret = -1;
+                goto quit_nomalloc;
+        }
+
         struct dhcp_msg *msg = NULL;
         ALLOC_DHCP_MSG_BUFFER(msg, DHCP_MSG_SIZE_REPLY_MINIMUM);
         if (!msg) {
@@ -52,7 +80,7 @@ int dhcpd_probe(const char *interface)
                 goto quit_nomalloc;
         }
 
-        ret = makeup_dhcpmsg_discover(msg, ETHER_802_3_TYPE,
+        ret = makeup_dhcpmsg_discover(msg, ETHERNET_TYPE,
                                       mac_address, ETHER_ADDR_LEN);
         if (ret < 0) {
                 PRINTF_TO_STDERR(dhcpd_probe_error(dhcpfunc_error(ret)));
@@ -65,39 +93,10 @@ int dhcpd_probe(const char *interface)
                 .sin_port = htons(DHCPS_RECV_PORT),
                 .sin_addr.s_addr = INADDR_BROADCAST
         };
-
         ret = send_dhcp_message_on(socketfd, msg, DHCP_MSG_SIZE_DISCOVER,
                                    (struct sockaddr *)&broadcast_addr, sizeof(struct sockaddr_in));
         if (ret < 0) {
                 PRINTF_TO_STDERR(dhcpd_probe_error(dhcpfunc_error(ret)));
-                ret = -1;
-                goto quit_malloc;
-        }
-
-        shutdown(socketfd, SHUT_RDWR);
-        socketfd = -1;
-
-        /**
-         * AF_PACKET with SOCK_DGRAM,IP packets subcommited by link-level removed
-         * ethernet frame header.
-         */
-        int sockllfd = socket(AF_PACKET, SOCK_DGRAM, htons(ETH_P_IP));
-        if (sockllfd < 0) {
-                PRINTF_TO_STDERR(dhcpd_probe_error(DHCPFUNC_ESOCKFD));
-                ret = -1;
-                goto quit_malloc;
-        }
-
-        /**
-         * link-level socket address used for bind to network card interface.
-         */
-        struct sockaddr_ll ll_addr = {0};
-        ll_addr.sll_family = AF_PACKET;
-        ll_addr.sll_protocol = htons(ETH_P_IP);
-        ll_addr.sll_ifindex = if_idx();
-
-        if (bind(sockllfd, (struct sockaddr *)&ll_addr, sizeof(struct sockaddr_ll)) < 0) {
-                PRINTF_TO_STDERR(dhcpd_probe_error(DHCPFUNC_EBIND));
                 ret = -1;
                 goto quit_malloc;
         }
@@ -107,10 +106,10 @@ int dhcpd_probe(const char *interface)
                 PRINTF_TO_STDERR(dhcpd_probe_error(dhcpfunc_error(ret)));
         
 quit_malloc:
-        shutdown(sockllfd, SHUT_RDWR);
         RELEASE_DHCP_MSG_BUFFER(msg);
 
 quit_nomalloc:
+        shutdown(sockllfd, SHUT_RDWR);
         shutdown(socketfd, SHUT_RDWR);
         return ret;
 }

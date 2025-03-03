@@ -16,7 +16,8 @@ enum IFQUERY_ERROR {
         IFQUERY_ESIZE = 3
 };
 
-static const uint8_t ETHER_802_3_TYPE = ETHER_ADDR_LEN;
+/* 10Mb ethernet type number in RFC Assigned Numbers */
+static const uint8_t ETHERNET_TYPE = 1;
 
 /**
  * ifquery_info - structure used to store netdevice interface

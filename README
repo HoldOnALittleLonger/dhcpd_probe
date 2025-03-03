@@ -1,0 +1,30 @@
+                                                                dhcpd_probe
+
+Description:
+        Probe dhcpd on local network.
+
+Usage:
+        sudo dhcpd_probe <netdevice interface>
+        /**
+         * root is request for broadcast.
+         */
+
+Design reason:
+        If I want it,then I have to build it.
+
+Logic order:
+        C                                S1                                           S2
+        broadcast DHCPREQUEST udp:67
+                                         received DHCPREQUEST udp:67                  ...
+                                         send DHCPRPLY udp:68 to client via ethernet  ...
+        received DHCPREPLY udp:68
+        report information
+        ...
+
+Develop environment:
+        Linux 5.4
+        glibc 2.31
+        x86_64
+
+Version:
+        v0.1
