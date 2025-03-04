@@ -80,12 +80,8 @@ int dhcpd_probe(const char *interface)
                 goto quit_nomalloc;
         }
 
-        ret = makeup_dhcpmsg_discover(msg, ETHERNET_TYPE,
+        makeup_dhcpmsg_discover(msg, ETHERNET_TYPE,
                                       mac_address, ETHER_ADDR_LEN);
-        if (ret < 0) {
-                PRINTF_TO_STDERR(dhcpd_probe_error(dhcpfunc_error(ret)));
-                goto quit_malloc;
-        }
 
         /* broadcast address */
         struct sockaddr_in broadcast_addr = {

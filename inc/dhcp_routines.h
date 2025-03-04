@@ -7,14 +7,12 @@
 enum DHCPFUNC_ERROR {
         DHCPFUNC_EEXPIRED = 0,
         DHCPFUNC_ESOCKFD = 1,
-        DHCPFUNC_EBUFFER = 2,
-        DHCPFUNC_EMEMORY = 3,
-        DHCPFUNC_ESYSCALL = 4,
-        DHCPFUNC_ESIZE = 5,
-        DHCPFUNC_EEPOLL = 6,
-        DHCPFUNC_ERECV = 7,
-        DHCPFUNC_EBIND = 8,
-        DHCPFUNC_EBROADCAST = 9
+        DHCPFUNC_EMEMORY = 2,
+        DHCPFUNC_ESYSCALL = 3,
+        DHCPFUNC_EEPOLL = 4,
+        DHCPFUNC_ERECV = 5,
+        DHCPFUNC_EBIND = 6,
+        DHCPFUNC_EBROADCAST = 7
 };
 
 static enum DHCPFUNC_ERROR dhcpfunc_error(int ec)
@@ -34,10 +32,8 @@ struct dhcp_msg;
  * @hw_type:                 the hardware address type
  * @hw_addr:                 the hardware address
  * @hw_addr_len:             how long the hardware address is
- * return:                   0 on succeed
- *                           -error code on failed
  */
-int makeup_dhcpmsg_discover(struct dhcp_msg *msg, uint8_t hw_type, 
+void makeup_dhcpmsg_discover(struct dhcp_msg *msg, uint8_t hw_type, 
                             uint8_t *hw_addr, uint8_t hw_addr_len);
 
 #define STRERR_BUF_SIZE  128
@@ -54,10 +50,8 @@ const char *dhcpd_probe_error(enum DHCPFUNC_ERROR ec);
  * dhcpd_probe_reporter - describe the dhcp message
  * @msg:                  message
  * @size:                 how long message is
- * return:                0 => no error encountered
- *                        -DHCPFUNC_EINFO => unknown dhcp info
  */
-int dhcpd_probe_reporter(const struct dhcp_msg *msg, size_t size);
+void dhcpd_probe_reporter(const struct dhcp_msg *msg, size_t size);
 
 /**
  * recv_dhcp_reply_on - receive dhcp reply dgram on a specified socket
