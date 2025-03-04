@@ -16,16 +16,9 @@
 
 #define DHCP_MSG_OPTS_START(pmsg)  ((pmsg)->options + MAGIC_COOKIE_LEN)
 
-int makeup_dhcpmsg_discover(struct dhcp_msg *msg, uint8_t hw_type, 
+void makeup_dhcpmsg_discover(struct dhcp_msg *msg, uint8_t hw_type, 
                             uint8_t *hw_addr, uint8_t hw_addr_len)
 {
-        if (!msg || !hw_addr) {
-                return -DHCPFUNC_EBUFFER;
-        }
-
-        if (hw_addr_len > MAX_CHADDR_LEN)
-                return -DHCPFUNC_ESIZE;
-
         msg->op = BOOTREQUEST;
         msg->htype = hw_type;
         msg->hlen = hw_addr_len;
@@ -40,9 +33,7 @@ int makeup_dhcpmsg_discover(struct dhcp_msg *msg, uint8_t hw_type,
         msg->giaddr = 0;
 
         memset(msg->chaddr, (uint8_t)0, MAX_CHADDR_LEN);
-        for (unsigned int idx = 0; idx < hw_addr_len; ++idx) {
-                msg->chaddr[idx] = hw_addr[idx];
-        }
+        memcpy(msg->chaddr, hw_addr, hw_addr_len);
 
         memset(msg->sname, (uint8_t)0, MAX_SNAME_LEN);
         memset(msg->file, (uint8_t)0, MAX_FILE_LEN);
@@ -61,7 +52,6 @@ int makeup_dhcpmsg_discover(struct dhcp_msg *msg, uint8_t hw_type,
         DHCP_MSG_OPTS_START(msg)[2] = DHCP_MSG_DISCOVER_TYPE;
         DHCP_MSG_OPTS_START(msg)[3] = DHCP_MSG_ENDOPT;
 
-        return 0;
 }
 
 const char *dhcpd_probe_error(enum DHCPFUNC_ERROR ec)
@@ -85,20 +75,12 @@ const char *dhcpd_probe_error(enum DHCPFUNC_ERROR ec)
                 strncpy(strerr_buf, "error : broadcast disallowed.",
                         STRERR_BUF_SIZE);
                 break;
-        case DHCPFUNC_EBUFFER:
-                strncpy(strerr_buf, "error : buffer invalid.",
-                        STRERR_BUF_SIZE);
-                break;
         case DHCPFUNC_EMEMORY:
                 strncpy(strerr_buf, "error : no memory is available.",
                         STRERR_BUF_SIZE);
                 break;
         case DHCPFUNC_ESYSCALL:
                 strncpy(strerr_buf, "error : syscall have fault.",
-                        STRERR_BUF_SIZE);
-                break;
-        case DHCPFUNC_ESIZE:
-                strncpy(strerr_buf, "error : incorrect size parameter.",
                         STRERR_BUF_SIZE);
                 break;
         case DHCPFUNC_EEPOLL:
@@ -116,11 +98,8 @@ const char *dhcpd_probe_error(enum DHCPFUNC_ERROR ec)
         return strerr_buf;
 }
 
-int dhcpd_probe_reporter(const struct dhcp_msg *msg, size_t size)
+void dhcpd_probe_reporter(const struct dhcp_msg *msg, size_t size)
 {
-        if (!msg)
-                return -DHCPFUNC_EBUFFER;
-
         /**
          * maybe data length of @msg > DHCP_MSG_SIZE_PAYLOAD.
          * in this case,dhcp message options have appended,
@@ -136,19 +115,10 @@ int dhcpd_probe_reporter(const struct dhcp_msg *msg, size_t size)
                 fprintf(stdout, "Assigned IP address : %s\n", ip_address);
                 putchar('\n');
         }
-
-        return 0;
 }
 
 int recv_dhcp_reply_on(int sockfd, struct dhcp_msg *buffer, size_t buffer_len, int mtu)
 {
-        if (sockfd < 0)
-                return -DHCPFUNC_ESOCKFD;
-        if (!buffer)
-                return -DHCPFUNC_EBUFFER;
-        if (buffer_len < DHCP_MSG_SIZE_REPLY_MINIMUM)
-                return -DHCPFUNC_ESIZE;
-
         /* socket I/O multiplex */
         int epfd = epoll_create(1);
         if (epfd < 0)
@@ -216,6 +186,7 @@ int recv_dhcp_reply_on(int sockfd, struct dhcp_msg *buffer, size_t buffer_len, i
 
                 const struct udp_segment *udpseg = ip_payload(ipacket);
 
+                /* filtering */
                 if (ipacket->des == INADDR_BROADCAST ||
                     ipacket->protocol != UDP_OVER_IP || 
                     ntohs(udpseg->udphdr.dport) != DHCPC_RECV_PORT)
@@ -228,9 +199,7 @@ int recv_dhcp_reply_on(int sockfd, struct dhcp_msg *buffer, size_t buffer_len, i
                 size_t data_size = buffer_len < udp_data_length(udpseg) ?
                         buffer_len : udp_data_length(udpseg);
                 memcpy(buffer, udpseg->data, data_size);
-                ret = dhcpd_probe_reporter(buffer, data_size);
-                if (ret < 0)
-                        break;
+                dhcpd_probe_reporter(buffer, data_size);
         }
 
 quit_malloc:
@@ -244,13 +213,6 @@ quit:
 int send_dhcp_message_on(int sockfd, const struct dhcp_msg *msg, size_t msg_len,
                          struct sockaddr *addr, socklen_t addr_len)
 {
-        if (sockfd < 0)
-                return -DHCPFUNC_ESOCKFD;
-        if (!msg || !addr)
-                return -DHCPFUNC_EBUFFER;
-        if (msg_len < DHCP_MSG_SIZE_PAYLOAD)
-                return -DHCPFUNC_ESIZE;
-
         struct iovec ivec = {
                 .iov_base = msg,
                 .iov_len = msg_len,

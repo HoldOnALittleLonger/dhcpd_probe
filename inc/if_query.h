@@ -11,9 +11,7 @@
 #include <sys/socket.h>
 
 enum IFQUERY_ERROR {
-        IFQUERY_EQUERY = 1,
-        IFQUERY_EBUFFER = 2,
-        IFQUERY_ESIZE = 3
+        IFQUERY_EQUERY = 1
 };
 
 /* 10Mb ethernet type number in RFC Assigned Numbers */
@@ -51,23 +49,14 @@ int restart_ifquery(const char *interface)
         return start_ifquery(interface);
 }
 
-
-
 static inline uint32_t if_pa_addr(void)
 {
         return ifinfo.if_addr;
 }
 
-static inline int if_hw_addr(uint8_t *buffer, size_t buffer_len)
+static inline void if_hw_addr(uint8_t *buffer, size_t buffer_len)
 {
-        if (!buffer)
-                return -IFQUERY_EBUFFER;
-        if (buffer_len != ETHER_ADDR_LEN)
-                return -IFQUERY_ESIZE;
-
         memcpy(buffer, ifinfo.if_hwaddr.sa_data, buffer_len);
-
-        return 0;
 }
 
 static inline int if_mtu(void)
