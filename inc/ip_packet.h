@@ -3,19 +3,27 @@
 
 #include <stdint.h>
 
-#define ip_hdr_DF(hdr) ((hdr)->flags_foffset & 2)
-#define ip_hdr_enable_DF(hdr) ((hdr)->flags_foffset |= 2)
-#define ip_hdr_disable_DF(hdr) ((hdr)->flags_foffset &= ~2)
 
-#define ip_hdr_MF(hdr) ((hdr)->flags_foffset & 4)
-#define ip_hdr_enable_MF(hdr) ((hdr)->flags_foffset |= 4)
-#define ip_hdr_disable_MF(hdr) ((hdr)->flags_foffset &= ~4)
+/* Now suppose fields of ip_packet is network byte-order */
 
-#define ip_hdr_foffset(hdr) ((hdr)->flags_foffset >> 3)
-#define ip_hdr_set_foffset(hdr, foffset)                        \
-        do {                                                    \
-                uint8_t flags = (hdr)->flags_foffset & 7;       \
-                (hdr)->flags_foffset = (foffset) << 3 | flags;  \
+#define IP_HDR_DF_MASK 0b0100000000000000
+#define IP_HDR_MF_MASK 0b0010000000000000
+#define IP_HDR_FOFFSET_MASK 0b0001111111111111
+
+
+#define ip_hdr_DF(hdr) (!!((hdr)->flags_foffset & IP_HDR_DF_MASK))
+#define ip_hdr_enable_DF(hdr) ((hdr)->flags_foffset |= IP_HDR_DF_MASK)
+#define ip_hdr_disable_DF(hdr) ((hdr)->flags_foffset &= ~IP_HDR_DF_MASK)
+
+#define ip_hdr_MF(hdr) (!!((hdr)->flags_foffset & IP_HDR_MF_MASK))
+#define ip_hdr_enable_MF(hdr) ((hdr)->flags_foffset |= IP_HDR_MF_MASK)
+#define ip_hdr_disable_MF(hdr) ((hdr)->flags_foffset &= ~IP_HDR_MF_MASK)
+
+#define ip_hdr_foffset(hdr) ((hdr)->flags_foffset & IP_HDR_FOFFSET_MASK)
+#define ip_hdr_set_foffset(hdr, foffset) \
+        do { \
+                uint16_t flags = (hdr)->flags_foffset & (IP_HDR_DF_MASK | IP_HDR_MF_MASK); \
+                (hdr)->flags_foffset = foffset | flags; \
         } while (0)
 
 enum UPPER_PROTOCOL {
