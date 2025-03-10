@@ -12,7 +12,9 @@ enum DHCPFUNC_ERROR {
         DHCPFUNC_EEPOLL = 4,
         DHCPFUNC_ERECV = 5,
         DHCPFUNC_EBIND = 6,
-        DHCPFUNC_EBROADCAST = 7
+        DHCPFUNC_EBROADCAST = 7,
+        
+        DHCPFUNC_ERROR_MAX
 };
 
 static enum DHCPFUNC_ERROR dhcpfunc_error(int ec)

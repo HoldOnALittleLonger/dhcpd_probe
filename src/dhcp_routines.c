@@ -56,46 +56,22 @@ void makeup_dhcpmsg_discover(struct dhcp_msg *msg, uint8_t hw_type,
 
 const char *dhcpd_probe_error(enum DHCPFUNC_ERROR ec)
 {
-        static char strerr_buf[STRERR_BUF_SIZE] = "NIL";
+        static const char *error_messages[DHCPFUNC_ERROR_MAX] = {
+                [DHCPFUNC_EEXPIRED] = "error : no more msg is available.",
+                [DHCPFUNC_ESOCKFD] = "error : open socket failed.",
+                [DHCPFUNC_EBIND] = "error : socket binding failed.",
+                [DHCPFUNC_EBROADCAST] = "error : broadcast disallowed.",
+                [DHCPFUNC_EMEMORY] = "error : no memory is available.",
+                [DHCPFUNC_ESYSCALL] = "error : syscall have fault.",
+                [DHCPFUNC_EEPOLL] = "error : I/O multiplex have failed.",
+                [DHCPFUNC_ERECV] = "error : incomplete dhcp message."
+        };
 
-        switch (ec) {
-        case DHCPFUNC_EEXPIRED:
-                strncpy(strerr_buf, "error : no more msg is available.",
-                        STRERR_BUF_SIZE);
-                break;
-        case DHCPFUNC_ESOCKFD:
-                strncpy(strerr_buf, "error : open socket failed.",
-                        STRERR_BUF_SIZE);
-                break;
-        case DHCPFUNC_EBIND:
-                strncpy(strerr_buf, "error : socket binding failed.",
-                        STRERR_BUF_SIZE);
-                break;
-        case DHCPFUNC_EBROADCAST:
-                strncpy(strerr_buf, "error : broadcast disallowed.",
-                        STRERR_BUF_SIZE);
-                break;
-        case DHCPFUNC_EMEMORY:
-                strncpy(strerr_buf, "error : no memory is available.",
-                        STRERR_BUF_SIZE);
-                break;
-        case DHCPFUNC_ESYSCALL:
-                strncpy(strerr_buf, "error : syscall have fault.",
-                        STRERR_BUF_SIZE);
-                break;
-        case DHCPFUNC_EEPOLL:
-                strncpy(strerr_buf, "error : I/O multiplex have failed.",
-                        STRERR_BUF_SIZE);
-                break;
-        case DHCPFUNC_ERECV:
-                strncpy(strerr_buf, "error : incomplete dhcp message.",
-                        STRERR_BUF_SIZE);
-        default:
-                strncpy(strerr_buf, "error : undefined error.",
-                        STRERR_BUF_SIZE);
-        }
+        static const char *undefined_error = "error : undefined error.";
 
-        return strerr_buf;
+        if (ec < DHCPFUNC_ERROR_MAX)
+                return error_messages[ec];
+        return undefined_error;
 }
 
 void dhcpd_probe_reporter(const struct dhcp_msg *msg, size_t size)
